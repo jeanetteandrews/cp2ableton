@@ -92,6 +92,8 @@ async function connectSerial(onDataCallback) {
   const encoder = new TextEncoderStream();
   encoder.readable.pipeTo(port.writable);
   const writer = encoder.writable.getWriter();
+  // attach the port to the writer so disconnect events can be correlated
+  writer._port = port;
 
   return writer;
 }
@@ -112,13 +114,25 @@ function checkAllConnected() {
 }
 
 document.getElementById('serial1').addEventListener('click', async () => {
-  writer1 = await connectSerial(onDataInstrument1);
-  updateConnectionStatus(1, !!writer1);
+  try {
+    writer1 = await connectSerial(onDataInstrument1);
+    updateConnectionStatus(1, !!writer1);
+  } catch (e) {
+    console.error('serial1 connect error:', e);
+    writer1 = null;
+    updateConnectionStatus(1, false);
+  }
   checkAllConnected();
 });
 document.getElementById('serial2').addEventListener('click', async () => {
-  writer2 = await connectSerial(onDataInstrument2);
-  updateConnectionStatus(2, !!writer2);
+  try {
+    writer2 = await connectSerial(onDataInstrument2);
+    updateConnectionStatus(2, !!writer2);
+  } catch (e) {
+    console.error('serial2 connect error:', e);
+    writer2 = null;
+    updateConnectionStatus(2, false);
+  }
   checkAllConnected();
 });
 
@@ -193,6 +207,8 @@ navigator.serial.addEventListener('connect', async (e) => {
   const encoder = new TextEncoderStream();
   encoder.readable.pipeTo(port.writable);
   const portWriter = encoder.writable.getWriter();
+      // attach the port to the writer for disconnect identification
+      portWriter._port = port;
 
   let buf = "";
   let identified = false;
@@ -230,8 +246,8 @@ navigator.serial.addEventListener('connect', async (e) => {
 
 navigator.serial.addEventListener('disconnect', (e) => {
   console.log("device disconnected — plug it back in and press button A");
-  if (writer1 && e.target === writer1._port) writer1 = null;
-  if (writer2 && e.target === writer2._port) writer2 = null;
+  if (writer1 && writer1._port === e.target) { writer1 = null; console.log('controller 1 disconnected'); }
+  if (writer2 && writer2._port === e.target) { writer2 = null; console.log('controller 2 disconnected'); }
   updateConnectionStatus(1, !!writer1);
   updateConnectionStatus(2, !!writer2);
 });
