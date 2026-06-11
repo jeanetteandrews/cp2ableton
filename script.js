@@ -44,16 +44,13 @@ let lastCCX1 = null; let lastCCY1 = null; let lastCCZ1 = null;
 let lastCCX2 = null; let lastCCY2 = null; let lastCCZ2 = null;
 
 // ── instruments ───────────────────────────────────────────────
-let midiOut1 = null; let writer1 = null;  // Bus 7 — inst 1 notes
-let midiOut2 = null; let writer2 = null;  // Bus 8 — inst 2 notes
+let writer1 = null;  // inst 1 notes
+let writer2 = null;  // inst 2 notes
 let midiOut1X = null; let midiOut1Y = null; let midiOut1Z = null;
 let midiOut2X = null; let midiOut2Y = null; let midiOut2Z = null;
 
-let pixel  = -1; let lastPixel  = -1; let z  = 0;
-let pixel2 = -1; let lastPixel2 = -1; let z2 = 0;
-
-const scale  = [48, 49, 50, 51, 52, 53, 54, 55, 56, 57];
-const scale1 = [40, 47, 50, 52, 54, 55, 59, 62, 64, 66];
+let z  = 0;
+let z2 = 0;
 
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
@@ -71,8 +68,7 @@ navigator.requestMIDIAccess().then(midi => {
     if (output.name === "IAC Driver Bus 4") { midiOut2X = output; console.log("MIDI out 2X connected:", output.name); }
     if (output.name === "IAC Driver Bus 5") { midiOut2Y = output; console.log("MIDI out 2Y connected:", output.name); }
     if (output.name === "IAC Driver Bus 6") { midiOut2Z = output; console.log("MIDI out 2Z connected:", output.name); }
-    if (output.name === "IAC Driver Bus 7") { midiOut1  = output; console.log("MIDI out 1 connected:",  output.name); }
-    if (output.name === "IAC Driver Bus 8") { midiOut2  = output; console.log("MIDI out 2 connected:",  output.name); }
+    // removed Bus 7/8 direct MIDI outputs (midiOut1/midiOut2)
   }
   if (!midiOut1X) console.warn("IAC Driver Bus 1 not found");
   if (!midiOut1Y) console.warn("IAC Driver Bus 2 not found");
@@ -80,8 +76,6 @@ navigator.requestMIDIAccess().then(midi => {
   if (!midiOut2X) console.warn("IAC Driver Bus 4 not found");
   if (!midiOut2Y) console.warn("IAC Driver Bus 5 not found");
   if (!midiOut2Z) console.warn("IAC Driver Bus 6 not found");
-  if (!midiOut1)  console.warn("IAC Driver Bus 7 not found");
-  if (!midiOut2)  console.warn("IAC Driver Bus 8 not found");
 });
 
 // ── serial ────────────────────────────────────────────────────
@@ -142,17 +136,6 @@ function onDataInstrument1(chunk) {
       const x = parseFloat(parts[0]);
       const y = parseFloat(parts[1]);
       z = parseFloat(parts[2]);
-      pixel = parseInt(parts[3]);
-
-      if (pixel !== lastPixel) {
-        lastPixel = pixel;
-        const midiNote = scale1[pixel];
-        if (midiOut1) {
-          midiOut1.send([0x90, midiNote, 100]);
-          midiOut1.send([0xB0, 20, Math.round((pixel / (scale1.length - 1)) * 127)]);
-          setTimeout(() => midiOut1.send([0x80, midiNote, 0]), BEAT / 2);
-        }
-      }
 
       const ccX = toCC(x, -10, 10);
       const ccY = toCC(y, -10, 10);
@@ -180,17 +163,6 @@ function onDataInstrument2(chunk) {
       const x2 = parseFloat(parts[0]);
       const y2 = parseFloat(parts[1]);
       z2 = parseFloat(parts[2]);
-      pixel2 = parseInt(parts[3]);
-
-      if (pixel2 !== lastPixel2) {
-        lastPixel2 = pixel2;
-        const midiNote = scale[pixel2];
-        if (midiOut2) {
-          midiOut2.send([0x90, midiNote, 100]);
-          midiOut2.send([0xB0, 20, Math.round((pixel2 / (scale.length - 1)) * 127)]);
-          setTimeout(() => midiOut2.send([0x80, midiNote, 0]), BEAT / 2);
-        }
-      }
 
       const ccX2 = toCC(x2, -10, 10);
       const ccY2 = toCC(y2, -10, 10);
