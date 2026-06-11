@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Circuit Playground 2 Ableton</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/png" href="https://abacasstorageaccnt.blob.core.windows.net/cirkit/c234510e-57b1-4bc5-911b-4c6a7bc8ca9a.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h3>1. Connect Circuit Playground</h3>
+  <button id="serial1">Controller 1</button>
+  <span id="status1" class="status disconnected">Disconnected</span>
+  <button id="serial2">Controller 2</button>
+  <span id="status2" class="status disconnected">Disconnected</span>
+  <br/><br/><br/>
+
+  <div id="cc-setup">
+    <h3>2. Connect to Ableton</h3>
+    <h4>Controller 1:</h4>
+    <button class="cc-button" data-cc="1X">X &nbsp;(CC 11)</button>
+    <button class="cc-button" data-cc="1Y">Y &nbsp;(CC 12)</button>
+    <button class="cc-button" data-cc="1Z">Z &nbsp;(CC 13)</button>
+    <h4>Controller 2:</h4>
+    <button class="cc-button" data-cc="2X">X &nbsp;(CC 21)</button>
+    <button class="cc-button" data-cc="2Y">Y &nbsp;(CC 22)</button>
+    <button class="cc-button" data-cc="2Z">Z &nbsp;(CC 23)</button>
+    <br/><br/><br/>
+    <h3>3. Start</h3>
+    <button class="cc-button" data-cc="all">Connect all CCs</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
