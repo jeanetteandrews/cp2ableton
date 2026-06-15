@@ -34,12 +34,12 @@ function setActiveCC(key) {
 }
 
 // ── CC state tracking ─────────────────────────────────────────
-let lastCCX1 = null; let lastCCY1 = null; let lastCCZ1 = null;
-let lastCCX2 = null; let lastCCY2 = null; let lastCCZ2 = null;
+let lastCCX1 = null; let lastCCY1 = null; let lastCCZ1 = null; let lastCC14 = null;
+let lastCCX2 = null; let lastCCY2 = null; let lastCCZ2 = null; let lastCCZ2val = null;
 
 // ── MIDI outputs ──────────────────────────────────────────────
-let midiOut1X = null; let midiOut1Y = null; let midiOut1Z = null;
-let midiOut2X = null; let midiOut2Y = null; let midiOut2Z = null;
+let midiOut1X = null; let midiOut1Y = null; let midiOut1Z = null; let midiOut1Zpos = null;
+let midiOut2X = null; let midiOut2Y = null; let midiOut2Z = null; let midiOut2Zval = null;
 
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
@@ -56,6 +56,8 @@ navigator.requestMIDIAccess().then(midi => {
     if (output.name === "IAC Driver Bus 4") { midiOut2X = output; console.log("MIDI out 2X connected:", output.name); }
     if (output.name === "IAC Driver Bus 5") { midiOut2Y = output; console.log("MIDI out 2Y connected:", output.name); }
     if (output.name === "IAC Driver Bus 6") { midiOut2Z = output; console.log("MIDI out 2Z connected:", output.name); }
+    if (output.name === "IAC Driver Bus 7") { midiOut2Zval = output; console.log("MIDI out 2Zval connected:", output.name); }
+    if (output.name === "IAC Driver Bus 8") { midiOut1Zpos = output; console.log("MIDI out 1Zpos connected:", output.name); }
   }
   if (!midiOut1X) console.warn("IAC Driver Bus 1 not found");
   if (!midiOut1Y) console.warn("IAC Driver Bus 2 not found");
@@ -63,6 +65,8 @@ navigator.requestMIDIAccess().then(midi => {
   if (!midiOut2X) console.warn("IAC Driver Bus 4 not found");
   if (!midiOut2Y) console.warn("IAC Driver Bus 5 not found");
   if (!midiOut2Z) console.warn("IAC Driver Bus 6 not found");
+  if (!midiOut2Zval) console.warn("IAC Driver Bus 7 not found");
+  if (!midiOut1Zpos) console.warn("IAC Driver Bus 8 not found");
 });
 
 // ── BLE ───────────────────────────────────────────────────────
@@ -106,13 +110,15 @@ function onDataController1(view) {
   const y = view.getFloat32(4, true);
   const z = view.getFloat32(8, true);
 
-  const ccX = toCC(x, -10, 10);
-  const ccY = toCC(y, -10, 10);
-  const ccZ = toCC(z, -10, 10);
+  const ccX  = toCC(x, -10, 10);
+  const ccY  = toCC(y, -10, 10);
+  const ccZ  = Math.abs(z - (-9.8)) <= 0.5 ? 127 : 0;
+  const cc14 = (z >= 0 && z <= 9.8) ? 127 : 0;
 
-  if (shouldSend('1X') && ccX !== lastCCX1) { lastCCX1 = ccX; if (midiOut1X) midiOut1X.send([0xB0, 11, ccX]); }
-  if (shouldSend('1Y') && ccY !== lastCCY1) { lastCCY1 = ccY; if (midiOut1Y) midiOut1Y.send([0xB0, 12, ccY]); }
-  if (shouldSend('1Z') && ccZ !== lastCCZ1) { lastCCZ1 = ccZ; if (midiOut1Z) midiOut1Z.send([0xB0, 13, ccZ]); }
+  if (shouldSend('1X')    && ccX  !== lastCCX1)  { lastCCX1  = ccX;  if (midiOut1X)    midiOut1X.send([0xB0, 11, ccX]); }
+  if (shouldSend('1Y')    && ccY  !== lastCCY1)  { lastCCY1  = ccY;  if (midiOut1Y)    midiOut1Y.send([0xB0, 12, ccY]); }
+  if (shouldSend('1Z')    && ccZ  !== lastCCZ1)  { lastCCZ1  = ccZ;  if (midiOut1Z)    midiOut1Z.send([0xB0, 13, ccZ]); }
+  if (shouldSend('1Zpos') && cc14 !== lastCC14)  { lastCC14  = cc14; if (midiOut1Zpos) midiOut1Zpos.send([0xB0, 14, cc14]); }
 
   if (activeCC === null && device1) markCCSending('all');
 }
@@ -123,13 +129,15 @@ function onDataController2(view) {
   const y2 = view.getFloat32(4, true);
   const z2 = view.getFloat32(8, true);
 
-  const ccX2 = toCC(x2, -10, 10);
-  const ccY2 = toCC(y2, -10, 10);
-  const ccZ2 = toCC(z2, -10, 10);
+  const ccX2    = toCC(x2, -10, 10);
+  const ccY2    = toCC(y2, -10, 10);
+  const ccZ2    = Math.abs(z2 - (-9.8)) <= 0.5 ? 127 : 0;
+  const ccZ2val = z2 >= 0 ? 127 : toCC(z2, -9.8, 0);
 
-  if (shouldSend('2X') && ccX2 !== lastCCX2) { lastCCX2 = ccX2; if (midiOut2X) midiOut2X.send([0xB0, 21, ccX2]); }
-  if (shouldSend('2Y') && ccY2 !== lastCCY2) { lastCCY2 = ccY2; if (midiOut2Y) midiOut2Y.send([0xB0, 22, ccY2]); }
-  if (shouldSend('2Z') && ccZ2 !== lastCCZ2) { lastCCZ2 = ccZ2; if (midiOut2Z) midiOut2Z.send([0xB0, 23, ccZ2]); }
+  if (shouldSend('2X')    && ccX2    !== lastCCX2)    { lastCCX2    = ccX2;    if (midiOut2X)    midiOut2X.send([0xB0, 21, ccX2]); }
+  if (shouldSend('2Y')    && ccY2    !== lastCCY2)    { lastCCY2    = ccY2;    if (midiOut2Y)    midiOut2Y.send([0xB0, 22, ccY2]); }
+  if (shouldSend('2Z')    && ccZ2    !== lastCCZ2)    { lastCCZ2    = ccZ2;    if (midiOut2Z)    midiOut2Z.send([0xB0, 23, ccZ2]); }
+  if (shouldSend('2Zval') && ccZ2val !== lastCCZ2val) { lastCCZ2val = ccZ2val; if (midiOut2Zval) midiOut2Zval.send([0xB0, 24, ccZ2val]); }
 
   if (activeCC === null && device2) markCCSending('all');
 }
