@@ -48,6 +48,13 @@ function toCC(val, inMin, inMax) {
   return Math.round(clamp((val - inMin) / (inMax - inMin), 0, 1) * 127);
 }
 
+function updateDisplay(key, rawVal, ccVal) {
+  const el = document.getElementById('display-' + key);
+  if (!el) return;
+  el.querySelector('.raw-val').textContent = rawVal.toFixed(2);
+  el.querySelector('.cc-val').textContent = ccVal;
+}
+
 navigator.requestMIDIAccess().then(midi => {
   for (let output of midi.outputs.values()) {
     if (output.name === "IAC Driver Bus 1") { midiOut1X = output; console.log("MIDI out 1X connected:", output.name); }
@@ -110,6 +117,10 @@ function onDataController1(view) {
   const ccY = toCC(y, -10, 10);
   const ccZ = toCC(z, -10, 10);
 
+  updateDisplay('1X', x, ccX);
+  updateDisplay('1Y', y, ccY);
+  updateDisplay('1Z', z, ccZ);
+
   if (shouldSend('1X') && ccX !== lastCCX1) { lastCCX1 = ccX; if (midiOut1X) midiOut1X.send([0xB0, 11, ccX]); }
   if (shouldSend('1Y') && ccY !== lastCCY1) { lastCCY1 = ccY; if (midiOut1Y) midiOut1Y.send([0xB0, 12, ccY]); }
   if (shouldSend('1Z') && ccZ !== lastCCZ1) { lastCCZ1 = ccZ; if (midiOut1Z) midiOut1Z.send([0xB0, 13, ccZ]); }
@@ -126,6 +137,10 @@ function onDataController2(view) {
   const ccX2 = toCC(x2, -10, 10);
   const ccY2 = toCC(y2, -10, 10);
   const ccZ2 = toCC(z2, -10, 10);
+
+  updateDisplay('2X', x2, ccX2);
+  updateDisplay('2Y', y2, ccY2);
+  updateDisplay('2Z', z2, ccZ2);
 
   if (shouldSend('2X') && ccX2 !== lastCCX2) { lastCCX2 = ccX2; if (midiOut2X) midiOut2X.send([0xB0, 21, ccX2]); }
   if (shouldSend('2Y') && ccY2 !== lastCCY2) { lastCCY2 = ccY2; if (midiOut2Y) midiOut2Y.send([0xB0, 22, ccY2]); }

@@ -72,3 +72,16 @@ button.cc-button[data-cc="all"] {
 #cc-setup {
   margin-top: 18px;
 }
+
+.cc-control {
+  display: inline-block;
+  vertical-align: top;
+  text-align: center;
+}
+
+.cc-display {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+  line-height: 1.6;
+}
